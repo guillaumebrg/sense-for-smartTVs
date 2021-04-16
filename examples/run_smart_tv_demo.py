@@ -1,10 +1,15 @@
 #!/usr/bin/env python
 """
-Run a custom classifier that was obtained via the train_classifier script.
+This script applies sense pre-trained models to Gesture Control for SmartTVs.
+
+List of controls:
+  - Play/Pause: Raise hand
+  - Next channel: Swipe left
+  - Previous channel: Swipe right
+  - Automatic pause when the user leaves
 
 Usage:
-  run_smart_tv_demo.py --custom_classifier=PATH
-                       [--camera_id=CAMERA_ID]
+  run_smart_tv_demo.py [--camera_id=CAMERA_ID]
                        [--path_in=FILENAME]
                        [--path_out=FILENAME]
                        [--title=TITLE]
@@ -17,20 +22,39 @@ Options:
   --path_out=FILENAME        Video file to stream to
   --title=TITLE              This adds a title to the window display
 """
-import os
-import json
-
 from docopt import docopt
-import torch
 
 import sense.display
+from sense.loading import load_weights_from_resources
 from sense.controller import Controller
 from sense.downstream_tasks.nn_utils import LogisticRegression
 from sense.downstream_tasks.nn_utils import Pipe
 from sense.downstream_tasks.postprocess import PostprocessClassificationOutput
 from sense.loading import build_backbone_network
-from sense.loading import load_backbone_model_from_config
 from sense.loading import update_backbone_weights
+from sense.loading import ModelConfig
+
+
+LAB2INT = {
+    "background": 0,
+    "hold-raised-hand": 1,
+    "ignore_1": 2,
+    "ignore_2": 3,
+    "ignore_3": 4,
+    "person-has-left": 5,
+    "person-still-there": 6,
+    "raising-hand": 7,
+    "sitting-down": 8,
+    "sitting-down-end": 9,
+    "standing-up": 10,
+    "swiping-left": 11,
+    "swiping-left-end": 12,
+    "swiping-right": 13,
+    "swiping-right-end": 14,
+    "walking": 15,
+    "walking-to-sofa-and-sit": 16
+}
+INT2LAB = {value: key for key, value in LAB2INT.items()}
 
 
 if __name__ == "__main__":
@@ -39,25 +63,21 @@ if __name__ == "__main__":
     camera_id = int(args['--camera_id'] or 0)
     path_in = args['--path_in'] or None
     path_out = args['--path_out'] or None
-    custom_classifier = args['--custom_classifier'] or None
     title = args['--title'] or None
     use_gpu = args['--use_gpu']
 
     # Load backbone network according to config file
-    backbone_model_config, backbone_weights = load_backbone_model_from_config(custom_classifier)
+    backbone_model_config = ModelConfig('StridedInflatedEfficientNet', 'pro', [])
+    backbone_weights = backbone_model_config.load_weights()['backbone']
 
     # Load custom classifier
-    checkpoint_classifier = torch.load(os.path.join(custom_classifier, 'best_classifier.checkpoint'))
+    checkpoint_classifier = load_weights_from_resources('smarttv_gesture_control/sien_pro_last_9_layers_float16.ckpt')
 
     # Update original weights in case some intermediate layers have been finetuned
     update_backbone_weights(backbone_weights, checkpoint_classifier)
 
     # Create backbone network
     backbone_network = build_backbone_network(backbone_model_config, backbone_weights)
-
-    with open(os.path.join(custom_classifier, 'label2int.json')) as file:
-        class2int = json.load(file)
-    INT2LAB = {value: key for key, value in class2int.items()}
 
     gesture_classifier = LogisticRegression(num_in=backbone_network.feature_dim,
                                             num_out=len(INT2LAB))

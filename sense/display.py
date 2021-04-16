@@ -393,7 +393,7 @@ class DisplayResults:
 
 class SmartTVButtons(BaseDisplay):
 
-    path = os.path.join(RESOURCES_DIR, 'play_and_pause.png')
+    path = os.path.join(RESOURCES_DIR, 'smarttv_gesture_control', 'play_and_pause.png')
     size = (100, 100)
 
     def __init__(self, *args, **kwargs):
