@@ -20,7 +20,13 @@ SUPPORTED_MODEL_CONFIGURATIONS = [
     ModelConfig('StridedInflatedEfficientNet', 'gesture_control', []),
 ]
 
-BACKBONE_MODELS = [model_name.combined_model_name for model_name in SUPPORTED_MODEL_CONFIGURATIONS]
+
+def get_available_backbone_models():
+    """
+    Get list of combined model names for all backbone models for which weights can be found in the local resources
+    folder.
+    """
+    return [model.combined_model_name for model in SUPPORTED_MODEL_CONFIGURATIONS if model.weights_available()]
 
 
 def load_feature_extractor(project_path):

@@ -1,4 +1,9 @@
 
+document.addEventListener("DOMContentLoaded", function () {
+    updateLayersToFinetuneSlider();
+});
+
+
 function addTerminalMessage(message) {
     let terminal = document.getElementById('terminal');
     terminal.insertAdjacentHTML('beforeend', `<div class='monospace-font'><b>${message}</b></div>`);
@@ -6,7 +11,7 @@ function addTerminalMessage(message) {
 }
 
 
-function startTraining(url) {
+async function startTraining(url) {
 
     let project = document.getElementById('project').value;
     let path = document.getElementById('path').value;
@@ -20,15 +25,20 @@ function startTraining(url) {
     let buttonCancelTrain = document.getElementById('btnCancelTrain');
     let confusionMatrix = document.getElementById('confusionMatrix');
 
+    data = {
+        path: path,
+        layersToFinetune: layersToFinetune,
+        outputFolder: outputFolder,
+        modelName: modelName,
+        epochs: epochs,
+    };
+    await asyncRequest(url, data);
+
     let socket = io.connect('/connect-training-logs');
     socket.on('connect', function() {
         console.log('Socket Connected');
         socket.emit('connect_training_logs',
                     {status: 'Socket Connected', project: project, outputFolder: outputFolder});
-    });
-
-    socket.on('status', function(message) {
-        console.log(message.status);
     });
 
     socket.on('training_logs', function(message) {
@@ -42,7 +52,12 @@ function startTraining(url) {
 
             buttonTrain.disabled = false;
             buttonCancelTrain.disabled = true;
-            confusionMatrix.innerHTML = `<img src=${message.img_path} alt='Confusion matrix' />`;
+
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                confusionMatrix.src = `data:image/png;base64,${e.target.result}`;
+            };
+            reader.readAsBinaryString(new Blob([message.img]));
         }
     });
 
@@ -59,18 +74,9 @@ function startTraining(url) {
     buttonTrain.disabled = true;
     buttonCancelTrain.disabled = false;
     terminal.innerHTML = '';
-    confusionMatrix.innerHTML = '';
+    confusionMatrix.src = '';
 
     addTerminalMessage('Training started...');
-
-    data = {
-        path: path,
-        layersToFinetune: layersToFinetune,
-        outputFolder: outputFolder,
-        modelName: modelName,
-        epochs: epochs,
-    };
-    asyncRequest(url, data);
 }
 
 
@@ -81,4 +87,35 @@ async function cancelTraining(url) {
     document.getElementById('btnCancelTrain').disabled = true;
 
     addTerminalMessage('Training cancelled.');
+}
+
+
+function updateLayersToFinetuneOutput() {
+    let layersToFinetune = document.getElementById('layersToFinetune');
+    let output = document.getElementById('layersToFinetuneOutput');
+
+    if (layersToFinetune.value == 0) {
+        output.value = 'Classification layer only';
+    } else if (layersToFinetune.value == layersToFinetune.max) {
+        output.value = 'All layers';
+    } else {
+        output.value = layersToFinetune.value;
+    }
+}
+
+
+function updateLayersToFinetuneSlider() {
+    let modelName = document.getElementById('modelName').value;
+    let layersToFinetune = document.getElementById('layersToFinetune');
+
+    if (modelName.includes('EfficientNet')) {
+        layersToFinetune.value = 9;
+        layersToFinetune.max = 32;
+
+    } else if (modelName.includes('MobileNet')) {
+        layersToFinetune.value = 5;
+        layersToFinetune.max = 19;
+    }
+
+    updateLayersToFinetuneOutput();
 }
