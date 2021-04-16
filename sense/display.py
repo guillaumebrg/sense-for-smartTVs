@@ -48,9 +48,9 @@ class BaseDisplay:
     """
     Base display for all displays. Subclasses should overwrite the `display` method.
     """
-    def __init__(self, offset_y=20, offset_x=350):
-        self.offset_y = offset_y
-        self.offset_x = offset_x
+    def __init__(self, y_offset=20, x_offset=350):
+        self.y_offset = y_offset
+        self.x_offset = x_offset
 
     def display(self, img: np.ndarray, display_data: dict) -> np.ndarray:
         """
@@ -76,8 +76,8 @@ class DisplayMETandCalories(BaseDisplay):
     def display(self, img, display_data):
         offset = 10
         for key in ['Met value', 'Total calories']:
-            put_text(img, "{}: {:.1f}".format(key, display_data[key]), (offset, self.offset_y))
-            offset += self.offset_x
+            put_text(img, "{}: {:.1f}".format(key, display_data[key]), (offset, self.y_offset))
+            offset += self.x_offset
         return img
 
 
@@ -89,13 +89,13 @@ class DisplayDetailedMETandCalories(BaseDisplay):
     def display(self, img, display_data):
         offset = 10
         text = "MET (live): {:.1f}".format(display_data['Met value'])
-        put_text(img, text, (offset, self.offset_y))
+        put_text(img, text, (offset, self.y_offset))
         offset += 175
         text = "MET (avg, corrected): {:.1f}".format(display_data['Corrected met value'])
-        put_text(img, text, (offset, self.offset_y))
+        put_text(img, text, (offset, self.y_offset))
         offset += 275
         text = "CALORIES: {:.1f}".format(display_data['Total calories'])
-        put_text(img, text, (offset, self.offset_y))
+        put_text(img, text, (offset, self.y_offset))
         return img
 
 
@@ -119,26 +119,26 @@ class DisplayTopKClassificationOutputs(BaseDisplay):
         sorted_predictions = display_data['sorted_predictions']
         for index in range(self.top_k):
             activity, proba = sorted_predictions[index]
-            y_pos = 20 * index + self.offset_y
+            y_pos = 20 * index + self.y_offset
             if proba >= self.threshold:
                 put_text(img, 'Activity: {}'.format(activity[0:50]), (10, y_pos))
-                put_text(img, 'Proba: {:0.2f}'.format(proba), (10 + self.offset_x,
+                put_text(img, 'Proba: {:0.2f}'.format(proba), (10 + self.x_offset,
                                                                y_pos))
         return img
 
 
 class DisplayRepCounts(BaseDisplay):
 
-    def __init__(self, offset_y=40):
-        super().__init__(offset_y=offset_y)
+    def __init__(self, y_offset=40):
+        super().__init__(y_offset=y_offset)
 
     def display(self, img, display_data):
         counters = display_data['counting']
         index = 0
         for activity, count in counters.items():
-            y_pos = 20 * (index + 1) + self.offset_y
+            y_pos = 20 * (index + 1) + self.y_offset
             put_text(img, 'Exercise: {}'.format(activity[0:50]), (10, y_pos))
-            put_text(img, 'Count: {}'.format(count), (10 + self.offset_x, y_pos))
+            put_text(img, 'Count: {}'.format(count), (10 + self.x_offset, y_pos))
             index += 1
         return img
 
@@ -152,8 +152,8 @@ class DisplayFPS(BaseDisplay):
             self,
             expected_camera_fps: Optional[float] = None,
             expected_inference_fps: Optional[float] = None,
-            offset_y=10):
-        super().__init__(offset_y=offset_y)
+            y_offset=10):
+        super().__init__(y_offset=y_offset)
         self.expected_camera_fps = expected_camera_fps
         self.expected_inference_fps = expected_inference_fps
 
@@ -189,9 +189,9 @@ class DisplayFPS(BaseDisplay):
             text_color = self.default_text_color
 
         # Show FPS on the video screen
-        put_text(img, "Camera FPS: {:.1f}".format(camera_fps), (5, img.shape[0] - self.offset_y - 20),
+        put_text(img, "Camera FPS: {:.1f}".format(camera_fps), (5, img.shape[0] - self.y_offset - 20),
                  color=text_color)
-        put_text(img, "Model FPS: {:.1f}".format(inference_engine_fps), (5, img.shape[0] - self.offset_y),
+        put_text(img, "Model FPS: {:.1f}".format(inference_engine_fps), (5, img.shape[0] - self.y_offset),
                  color=text_color)
 
         return img

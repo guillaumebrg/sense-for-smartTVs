@@ -56,8 +56,7 @@ SUPPORTED_MODEL_CONFIGURATIONS = [
     ModelConfig('StridedInflatedMobileNetV2', 'pro', []),
     ModelConfig('StridedInflatedEfficientNet', 'lite', []),
     ModelConfig('StridedInflatedMobileNetV2', 'lite', []),
-    ModelConfig('StridedInflatedMobileNetV2', 'lite', []),
-    ModelConfig('StridedInflatedEfficientNet', 'gesture_control', []),
+    ModelConfig('StridedInflatedMobileNetV2', 'lite', [])
 ]
 
 
@@ -127,7 +126,6 @@ def train_model(path_in, path_out, model_name, model_version, num_layers_to_fine
     # Find label names
     label_names = os.listdir(directories.get_videos_dir(path_in, 'train'))
     label_names = [x for x in label_names if not x.startswith('.')]
-
     label_names_temporal = ['background']
 
     project_config = load_project_config(path_in)
@@ -148,7 +146,6 @@ def train_model(path_in, path_out, model_name, model_version, num_layers_to_fine
     # Create the data loaders
     features_dir = directories.get_features_dir(path_in, 'train', selected_config, num_layers_to_finetune)
     tags_dir = directories.get_tags_dir(path_in, 'train')
-
     train_loader = generate_data_loader(
         project_config,
         features_dir,

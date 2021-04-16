@@ -116,7 +116,6 @@ def generate_data_loader(project_config, features_dir, tags_dir, label_names, la
 
     # Check if temporal annotations exist for each video
     for label, feature in zip(labels_string, features):
-
         temporal_annotation_file = feature.replace(features_dir, tags_dir).replace(".npy", ".json")
         if os.path.isfile(temporal_annotation_file) and temporal_annotation_only:
             if project_config:
