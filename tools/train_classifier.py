@@ -56,7 +56,7 @@ SUPPORTED_MODEL_CONFIGURATIONS = [
     ModelConfig('StridedInflatedMobileNetV2', 'pro', []),
     ModelConfig('StridedInflatedEfficientNet', 'lite', []),
     ModelConfig('StridedInflatedMobileNetV2', 'lite', []),
-    ModelConfig('StridedInflatedMobileNetV2', 'lite', [])
+    ModelConfig('StridedInflatedMobileNetV2', 'lite', []),
 ]
 
 

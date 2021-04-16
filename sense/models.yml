@@ -13,7 +13,6 @@ StridedInflatedEfficientNet:
     met_converter: calorie_estimation/sien_met_converter.ckpt
     rep_counter: fitness_rep_counting/sien_logreg.ckpt
 
-
 StridedInflatedMobileNetV2:
 
   lite:
