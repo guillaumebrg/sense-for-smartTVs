@@ -3,18 +3,24 @@ Models showcased here were finetuned using the pre-trained weights and training 
 
 ## Gesture control for SmartTVs 
 
-This repo provides a gesture control demo for SmartTVs. The following controls were implemented:
+This repo demoes a gesture control system for smart TVs. The following controls were implemented:
+  - Play/Pause: Raise hand
+  - Next channel: Swipe left
+  - Previous channel: Swipe right
+  - Automatic pause when the user leaves
 
-TODO
+<div align="center">
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/TwentyBN/sense/master/resources/smarttv_gesture_control/video_test.gif" width="600px">
+    <img src="https://raw.githubusercontent.com/guillaumebrg/sense-for-smartTVs/fix-readme/resources/smarttv_gesture_control/video_test.gif" width="600px">
 </p>
 
-Try it yourself using: 
+</div>
+
+Try it yourself: 
 
 ```shell
-PYTHONPATH=./ python examples/run_smart_tv_demo.py --path_in=resources/smarttv_gesture_control/video_test.mp4 [--use_gpu]
+PYTHONPATH=./ python examples/run_smart_tv_demo.py --use_gpu
 ```
 
 
