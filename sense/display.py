@@ -1,11 +1,14 @@
 import cv2
 import numpy as np
+import os
 import time
 
 from typing import Dict
 from typing import List
 from typing import Tuple
 from typing import Optional
+
+from sense import RESOURCES_DIR
 
 
 FONT = cv2.FONT_HERSHEY_PLAIN
@@ -45,8 +48,9 @@ class BaseDisplay:
     """
     Base display for all displays. Subclasses should overwrite the `display` method.
     """
-    def __init__(self, y_offset=20):
+    def __init__(self, y_offset=20, x_offset=350):
         self.y_offset = y_offset
+        self.x_offset = x_offset
 
     def display(self, img: np.ndarray, display_data: dict) -> np.ndarray:
         """
@@ -69,13 +73,11 @@ class DisplayMETandCalories(BaseDisplay):
     Display Metabolic Equivalent of Task (MET) and Calories information on an image frame.
     """
 
-    lateral_offset = 350
-
     def display(self, img, display_data):
         offset = 10
         for key in ['Met value', 'Total calories']:
             put_text(img, "{}: {:.1f}".format(key, display_data[key]), (offset, self.y_offset))
-            offset += self.lateral_offset
+            offset += self.x_offset
         return img
 
 
@@ -102,8 +104,6 @@ class DisplayTopKClassificationOutputs(BaseDisplay):
     Display Top K Classification output on an image frame.
     """
 
-    lateral_offset = DisplayMETandCalories.lateral_offset
-
     def __init__(self, top_k=1, threshold=0.2, **kwargs):
         """
         :param top_k:
@@ -122,17 +122,15 @@ class DisplayTopKClassificationOutputs(BaseDisplay):
             y_pos = 20 * index + self.y_offset
             if proba >= self.threshold:
                 put_text(img, 'Activity: {}'.format(activity[0:50]), (10, y_pos))
-                put_text(img, 'Proba: {:0.2f}'.format(proba), (10 + self.lateral_offset,
+                put_text(img, 'Proba: {:0.2f}'.format(proba), (10 + self.x_offset,
                                                                y_pos))
         return img
 
 
 class DisplayRepCounts(BaseDisplay):
 
-    lateral_offset = DisplayMETandCalories.lateral_offset
-
     def __init__(self, y_offset=40):
-        super().__init__(y_offset)
+        super().__init__(y_offset=y_offset)
 
     def display(self, img, display_data):
         counters = display_data['counting']
@@ -140,7 +138,7 @@ class DisplayRepCounts(BaseDisplay):
         for activity, count in counters.items():
             y_pos = 20 * (index + 1) + self.y_offset
             put_text(img, 'Exercise: {}'.format(activity[0:50]), (10, y_pos))
-            put_text(img, 'Count: {}'.format(count), (10 + self.lateral_offset, y_pos))
+            put_text(img, 'Count: {}'.format(count), (10 + self.x_offset, y_pos))
             index += 1
         return img
 
@@ -155,7 +153,7 @@ class DisplayFPS(BaseDisplay):
             expected_camera_fps: Optional[float] = None,
             expected_inference_fps: Optional[float] = None,
             y_offset=10):
-        super().__init__(y_offset)
+        super().__init__(y_offset=y_offset)
         self.expected_camera_fps = expected_camera_fps
         self.expected_inference_fps = expected_inference_fps
 
@@ -391,3 +389,80 @@ class DisplayResults:
     def clean_up(self):
         """Close all windows that are created."""
         cv2.destroyAllWindows()
+
+
+class SmartTVButtons(BaseDisplay):
+
+    path = os.path.join(RESOURCES_DIR, 'smarttv_gesture_control', 'play_and_pause.png')
+    size = (100, 100)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Initialize value of ui elements
+        self.playback_status = False
+        self.playback_status_lock = False
+        self.channel_number = 10
+        self.channel_number_lock = False
+
+        # Prepare play and pause UI elements
+        play_and_pause = cv2.imread(self.path)
+        play = cv2.resize(play_and_pause[:, 0:int(play_and_pause.shape[1] / 2)], self.size)
+        pause = cv2.resize(play_and_pause[:, int(play_and_pause.shape[1] / 2):], self.size)
+        self.play = cv2.cvtColor(play, cv2.COLOR_BGR2GRAY)
+        self.pause = cv2.cvtColor(pause, cv2.COLOR_BGR2GRAY)
+
+    def update_ui_values(self, display_data):
+        predictions = {key: value for key, value in display_data['sorted_predictions']}
+
+        # Play-pause logic
+        if predictions['hold-raised-hand'] > 0.8 and not self.playback_status_lock:
+            self.playback_status = not self.playback_status
+            self.playback_status_lock = True
+
+        elif self.playback_status_lock and predictions['hold-raised-hand'] < 0.05:
+            self.playback_status_lock = False
+
+        if predictions['person-has-left'] > 0.8:
+            self.playback_status = False
+            self.playback_status_lock = False
+
+        # Channel number logic
+        if predictions['swiping-left-end'] > predictions['swiping-right-end']:
+            swipe_key = 'swiping-left-end'
+            increment = 1
+        else:
+            swipe_key = 'swiping-right-end'
+            increment = -1
+
+        if predictions[swipe_key] > 0.8 and not self.channel_number_lock:
+            self.channel_number += increment
+            self.channel_number_lock = True
+
+        elif self.channel_number_lock and predictions[swipe_key] < 0.05:
+            self.channel_number_lock = False
+
+
+    def display(self, img: np.ndarray, display_data: dict) -> np.ndarray:
+        self.update_ui_values(display_data)
+
+        # Play/Pause overlay
+        if self.playback_status:
+            ui_elem = self.play
+            ui_color = [0, 200, 0]
+        else:
+            ui_elem = self.pause
+            ui_color = [0, 0, 200]
+
+        mask = np.zeros(img.shape[0:2], dtype='uint8')
+        top_x = int((img.shape[1] - self.size[1]) / 2)
+        top_y = int((img.shape[0] - self.size[0]) / 2)
+        mask[top_y: top_y + self.size[0], top_x: top_x + self.size[0]] = ui_elem
+        mask = mask > 0
+        img[mask] = ui_color
+
+        # TV Channel
+        img = put_text(img, str(self.channel_number), (5, 70),
+                       font_scale=3, thickness=3, color=(200, 0, 0))
+
+        return img
