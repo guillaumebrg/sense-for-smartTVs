@@ -1,9 +1,9 @@
-Note: Please note that this repo is a fork built on top of the main `sense` repository: https://github.com/TwentyBN/sense.
-Models showcased here were finetuned using the pre-trained weights and training tools available in the original repo.
+Note: Please note that this repo is a fork of `sense`: https://github.com/TwentyBN/sense.
+Models showcased here are finetuned using the pre-trained weights and training tools available in the original repo.
 
 ## Gesture control for SmartTVs 
 
-This repo demoes a gesture control system for smart TVs. The following controls were implemented:
+This repo demoes an RGB-based gesture control system for smart TVs. The following controls are supported:
   - Play/Pause: Raise hand
   - Next channel: Swipe left
   - Previous channel: Swipe right
@@ -12,7 +12,7 @@ This repo demoes a gesture control system for smart TVs. The following controls 
 <div align="center">
 
 <p align="center">
-    <img src="https://raw.githubusercontent.com/guillaumebrg/sense-for-smartTVs/fix-readme/resources/smarttv_gesture_control/video_test.gif" width="600px">
+    <img src="https://raw.githubusercontent.com/guillaumebrg/sense-for-smartTVs/master/resources/smarttv_gesture_control/video_test.gif" width="600px">
 </p>
 
 </div>
@@ -37,17 +37,11 @@ PYTHONPATH=./ python examples/run_smart_tv_demo.py --path_in=resources/smarttv_g
 
 Model predictions should be similar to what is shown in the GIF above. In case you see a difference, check 
 the model framerate, displayed at the bottom-left corner; it should be close to 4 FPS. A framerate lower 
-than 4 indicates that your CPU isn't able to perform inference fast enough. To fix it, you may want to
-use your GPU instead, appending `--use_gpu` to the above-mentioned command line.
+than 4 indicates that your CPU isn't able to perform inference fast enough. If you have one, you may want 
+to run the model on the GPU instead, appending `--use_gpu` to the above-mentioned command line.
 
-
-#### Training details
-
-TODO
-
----
 
 ## License 
 
-The code is MIT but retrained weights come with a separate license available. Please check the original 
+The code is MIT but pretrained weights come with a separate license available. Please check the original 
 [sense repo](https://github.com/TwentyBN/sense) for more information.
