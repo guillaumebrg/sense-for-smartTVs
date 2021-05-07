@@ -43,5 +43,5 @@ to run the model on the GPU instead, appending `--use_gpu` to the above-mentione
 
 ## License 
 
-The code is MIT but pretrained weights come with a separate license available. Please check the original 
+The code is MIT but pretrained weights come with a separate license. Please check the original 
 [sense repo](https://github.com/TwentyBN/sense) for more information.
